@@ -68,17 +68,7 @@ def main():
         if args.save:
             cv2.imwrite(os.path.join(out_dir, '%07d.jpg' % idx), frame)
         t2 = time.perf_counter()
-        logger.debug(f'Time cost per frame: {t2 - t1} s ({ 1 / (t2 - t1)} FPS)')
-
-
-prev_frame = None
-prev_kps = {}
-tracker_dist = {
-    # track_id: {
-    #     'dists': [],
-    #     'frames': 4
-    # }
-}
+        logger.debug(f'Time cost per frame: {t2 - t1} s ({1 / (t2 - t1)} FPS)')
 
 
 def detect_long_parking(img, visualize=False):
@@ -88,15 +78,10 @@ def detect_long_parking(img, visualize=False):
     :param visualize: if return visualized frame
     :return: frame(ndarray/None), logs([str])
     """
-    global prev_frame, prev_kps, tracker_dist
     dets = detect_taxi(img)  # [[x1, y1, x2, y2, conf]]
-    tracks = track_vehicle(img, dets)   # [[x1, y1, x2, y2, track_id]]
-    curr_kps, dist_info = optical_flow_LK(prev_frame, img, prev_kps, tracks)
-    prev_frame, prev_kps = img, curr_kps
-    tracker_dist, warning_cars = long_parking_warning(tracker_dist, dist_info)
-    logger.debug(f'tracker_dist: {tracker_dist}')
-    if warning_cars:
-        logger.debug(f'warning_cars: {warning_cars}')
+    tracks = track_vehicle(img, dets)  # [[x1, y1, x2, y2, track_id]]
+    curr_kps, dist_info = optical_flow_LK(img, tracks)
+    warning_cars = long_parking_warning(dist_info)
     if visualize:
         frame = draw_frame(img, dets, tracks, curr_kps)
         return frame, warning_cars
